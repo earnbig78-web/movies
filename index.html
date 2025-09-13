@@ -47,12 +47,6 @@
       font-size: 1.5rem;
       border-bottom: 1px solid #333;
     }
-    #search-timer {
-      text-align: center;
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-      display: none;
-    }
     .results {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -107,6 +101,26 @@
 
 <header>Movie & TV Streaming Site</header>
 
+<!-- Banner Ad -->
+<div style="text-align:center; margin: 1rem 0;">
+  <script type="text/javascript">
+    atOptions = {
+      'key' : '00938827548cbe9e915ca0a37ddf3989',
+      'format' : 'iframe',
+      'height' : 90,
+      'width' : 728,
+      'params' : {}
+    };
+  </script>
+  <script type="text/javascript" src="//www.highperformanceformat.com/00938827548cbe9e915ca0a37ddf3989/invoke.js"></script>
+</div>
+
+<!-- Native Banner -->
+<div style="text-align:center; margin: 1rem 0;">
+  <script async="async" data-cfasync="false" src="//pl27637342.revenuecpmgate.com/95bb98688bd950bac359922bc921a271/invoke.js"></script>
+  <div id="container-95bb98688bd950bac359922bc921a271"></div>
+</div>
+
 <div id="search-bar">
   <input id="searchInput" type="text" placeholder="Search movies or TV shows..." />
   <button id="searchButton">Search</button>
@@ -122,7 +136,6 @@
 <div id="trending-tv" class="results"></div>
 
 <div class="section-title" id="search-section" style="display:none;">Search Results - Movies</div>
-<div id="search-timer"></div> <!-- 👈 Countdown timer -->
 <div id="search-results-movies" class="results"></div>
 
 <div class="section-title" id="search-section-tv" style="display:none;">Search Results - TV Shows</div>
@@ -133,9 +146,13 @@
 <script>
   const API_KEY = '9ad958fa4cfc7185af4481588a9c4896';
 
-  // Your Adsterra ad direct link
-  const adsterraDirectLink = 'https://www.revenuecpmgate.com/hu4m9xgf?key=13d7ed2b8ada41358fd402fd10815fde';
+  // Your two Adsterra direct links here
+  const adsterraDirectLinks = [
+    'https://www.revenuecpmgate.com/hu4m9xgf?key=13d7ed2b8ada41358fd402fd10815fde',
+    'https://www.revenuecpmgate.com/xzzybvb257?key=286875a93a97823807f694c01f1c817a'
+  ];
 
+  // DOM elements
   const trendingMoviesContainer = document.getElementById('trending-movies');
   const newMoviesContainer = document.getElementById('new-movies');
   const trendingTVContainer = document.getElementById('trending-tv');
@@ -143,14 +160,15 @@
   const searchResultsTV = document.getElementById('search-results-tv');
   const searchSectionMovies = document.getElementById('search-section');
   const searchSectionTV = document.getElementById('search-section-tv');
-  const searchTimer = document.getElementById('search-timer');
 
+  // On page load, fetch trending/new content
   window.onload = () => {
     fetchTrendingMovies();
     fetchNewMovies();
     fetchTrendingTV();
   };
 
+  // Search button
   document.getElementById('searchButton').addEventListener('click', searchAll);
   document.getElementById('searchInput').addEventListener('keypress', e => {
     if (e.key === 'Enter') searchAll();
@@ -193,54 +211,28 @@
     const query = document.getElementById('searchInput').value.trim();
     if (!query) return;
 
-    // Open Ad in new tab
-    window.open(adsterraDirectLink, '_blank');
-
-    // Prepare search sections
-    searchSectionMovies.style.display = 'block';
-    searchSectionTV.style.display = 'block';
-    searchResultsMovies.innerHTML = '';
-    searchResultsTV.innerHTML = '';
-
-    // Start countdown timer
-    let seconds = 15;
-    searchTimer.style.display = 'block';
-    searchTimer.innerText = `⏳ Please wait... loading results in ${seconds} seconds...`;
-
-    const countdown = setInterval(() => {
-      seconds--;
-      if (seconds > 0) {
-        searchTimer.innerText = `⏳ Please wait... loading results in ${seconds} seconds...`;
-      } else {
-        clearInterval(countdown);
-        searchTimer.style.display = 'none';
-        fetchSearchResults(query);
-      }
-    }, 1000);
-  }
-
-  async function fetchSearchResults(query) {
     searchResultsMovies.innerHTML = 'Loading...';
     searchResultsTV.innerHTML = 'Loading...';
+    searchSectionMovies.style.display = 'block';
+    searchSectionTV.style.display = 'block';
+
+    // Open ads on search immediately
+    openAds();
 
     try {
-      const [movieRes, tvRes] = await Promise.all([
-        fetch(`https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}`),
-        fetch(`https://api.themoviedb.org/3/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(query)}`)
-      ]);
-
-      const movieData = await movieRes.json();
-      const tvData = await tvRes.json();
-
-      renderMovies(movieData.results || [], searchResultsMovies);
-      renderTVShows(tvData.results || [], searchResultsTV);
-    } catch (err) {
-      console.error('Search failed:', err);
+      const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      const movies = data.results.filter(item => item.media_type === 'movie');
+      const tvShows = data.results.filter(item => item.media_type === 'tv');
+      renderMovies(movies, searchResultsMovies);
+      renderTVShows(tvShows, searchResultsTV);
+    } catch {
       searchResultsMovies.innerHTML = '<p>Error searching movies.</p>';
       searchResultsTV.innerHTML = '<p>Error searching TV shows.</p>';
     }
   }
 
+  // Render Movies helper
   function renderMovies(movies, container) {
     container.innerHTML = '';
     if (!movies.length) {
@@ -263,12 +255,13 @@
         </div>
       `;
       card.querySelector('.watch-button').addEventListener('click', () => {
-        openAdThenContent(url);
+        openAdsThenContent(url);
       });
       container.appendChild(card);
     });
   }
 
+  // Render TV helper
   async function renderTVShows(shows, container) {
     container.innerHTML = '';
     if (!shows.length) {
@@ -302,7 +295,7 @@
           </div>
         `;
         card.querySelector('.watch-button').addEventListener('click', () => {
-          openAdThenContent(url);
+          openAdsThenContent(url);
         });
         container.appendChild(card);
       } catch {
@@ -317,20 +310,36 @@
           </div>
         `;
         card.querySelector('.watch-button').addEventListener('click', () => {
-          openAdThenContent(fallbackUrl);
+          openAdsThenContent(fallbackUrl);
         });
         container.appendChild(card);
       }
     }
   }
 
-  function openAdThenContent(contentUrl) {
-    window.open(adsterraDirectLink, '_blank');
+  // Open both ads immediately on search
+  function openAds() {
+    // Open both direct ad links in new tabs right away
+    adsterraDirectLinks.forEach(link => window.open(link, '_blank'));
+  }
+
+  // On watch button click: open ads then after 15 seconds open content
+  function openAdsThenContent(contentUrl) {
+    // Open both ad links immediately
+    openAds();
+
+    // After 15 seconds open the content URL
     setTimeout(() => {
       window.open(contentUrl, '_blank');
-    }, 5000);
+    }, 15000);
   }
 </script>
+
+<!-- Popunder Script -->
+<script type='text/javascript' src='//pl27637333.revenuecpmgate.com/8e/c3/38/8ec338fcd6639a46de5cdcbf120106f5.js'></script>
+
+<!-- Social Bar Script -->
+<script type='text/javascript' src='//pl27637337.revenuecpmgate.com/39/a7/b5/39a7b53e758dd5f6b821266603d9f522.js'></script>
 
 </body>
 </html>
