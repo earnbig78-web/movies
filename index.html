@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Movie & TV Search</title>
+  <title>Movie & TV Streaming Site</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,7 +11,6 @@
       margin: 0;
       padding: 0;
     }
-
     header {
       background: #1f1f1f;
       text-align: center;
@@ -19,14 +18,12 @@
       font-size: 2rem;
       font-weight: bold;
     }
-
     #search-bar {
       max-width: 600px;
       margin: 1rem auto;
       display: flex;
       padding: 0 1rem;
     }
-
     #searchInput {
       flex: 1;
       padding: 0.7rem;
@@ -34,7 +31,6 @@
       border-radius: 4px 0 0 4px;
       font-size: 1rem;
     }
-
     #searchButton {
       padding: 0.7rem 1rem;
       background: #e50914;
@@ -44,7 +40,6 @@
       cursor: pointer;
       font-size: 1rem;
     }
-
     .section-title {
       max-width: 1100px;
       margin: 2rem auto 1rem;
@@ -52,7 +47,6 @@
       font-size: 1.5rem;
       border-bottom: 1px solid #333;
     }
-
     .results {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -61,32 +55,26 @@
       max-width: 1100px;
       margin: auto;
     }
-
     .card {
       background: #222;
       border-radius: 8px;
       overflow: hidden;
       transition: transform 0.3s;
     }
-
     .card:hover {
       transform: scale(1.05);
     }
-
     .card img {
       width: 100%;
     }
-
     .card-content {
       padding: 0.7rem 1rem;
     }
-
     .title {
       font-weight: bold;
       font-size: 1.1rem;
       margin-bottom: 0.5rem;
     }
-
     .watch-button {
       display: inline-block;
       background: #e50914;
@@ -96,8 +84,9 @@
       text-decoration: none;
       margin-top: 0.5rem;
       font-weight: bold;
+      cursor: pointer;
+      user-select: none;
     }
-
     footer {
       background: #1f1f1f;
       text-align: center;
@@ -106,128 +95,160 @@
       color: #666;
       margin-top: 2rem;
     }
-
-    /* Ad Modal */
-    #ad-modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.95);
-      z-index: 9999;
-      color: white;
-      text-align: center;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-    }
-
-    #ad-container {
-      background: #333;
-      padding: 1rem;
-      border-radius: 8px;
-      margin: 1rem;
-    }
   </style>
 </head>
 <body>
 
-  <header>Movie & TV Search</header>
+<header>Movie & TV Streaming Site</header>
 
-  <div id="search-bar">
-    <input id="searchInput" type="text" placeholder="Search movies or TV shows..." />
-    <button id="searchButton">Search</button>
-  </div>
+<div id="search-bar">
+  <input id="searchInput" type="text" placeholder="Search movies or TV shows..." />
+  <button id="searchButton">Search</button>
+</div>
 
-  <div class="section-title">Movies</div>
-  <div id="results-movies" class="results"></div>
+<div class="section-title">Trending Movies</div>
+<div id="trending-movies" class="results"></div>
 
-  <div class="section-title">TV Shows</div>
-  <div id="results-tv" class="results"></div>
+<div class="section-title">New Movies (Now Playing)</div>
+<div id="new-movies" class="results"></div>
 
-  <footer>&copy; 2025 Your Movie Site</footer>
+<div class="section-title">Trending TV Shows</div>
+<div id="trending-tv" class="results"></div>
 
-  <!-- Ad Modal -->
-  <div id="ad-modal">
-    <h2>Advertisement</h2>
-    <div id="ad-container">
-      <!-- Paste your Adsterra ad code here -->
-      <p>Your Adsterra ad goes here (728x90 banner, etc).</p>
-    </div>
-    <p>Redirecting in <span id="countdown">5</span> seconds...</p>
-  </div>
+<div class="section-title" id="search-section" style="display:none;">Search Results - Movies</div>
+<div id="search-results-movies" class="results"></div>
 
-  <script>
-    const API_KEY = '9ad958fa4cfc7185af4481588a9c4896';
+<div class="section-title" id="search-section-tv" style="display:none;">Search Results - TV Shows</div>
+<div id="search-results-tv" class="results"></div>
 
-    document.getElementById('searchButton').addEventListener('click', searchAll);
-    document.getElementById('searchInput').addEventListener('keypress', e => {
-      if (e.key === 'Enter') searchAll();
-    });
+<footer>&copy; 2025 Your Movie Site</footer>
 
-    async function searchAll() {
-      const query = document.getElementById('searchInput').value.trim();
-      if (!query) return;
+<script>
+  const API_KEY = '9ad958fa4cfc7185af4481588a9c4896';
 
-      document.getElementById('results-movies').innerHTML = 'Loading...';
-      document.getElementById('results-tv').innerHTML = 'Loading...';
+  // Your Adsterra ad direct link here (replace with your actual Adsterra URL)
+  const adsterraDirectLink = 'https://your-adsterra-ad-link.example.com';
 
+  // DOM elements
+  const trendingMoviesContainer = document.getElementById('trending-movies');
+  const newMoviesContainer = document.getElementById('new-movies');
+  const trendingTVContainer = document.getElementById('trending-tv');
+  const searchResultsMovies = document.getElementById('search-results-movies');
+  const searchResultsTV = document.getElementById('search-results-tv');
+  const searchSectionMovies = document.getElementById('search-section');
+  const searchSectionTV = document.getElementById('search-section-tv');
+
+  // On page load, fetch trending/new content
+  window.onload = () => {
+    fetchTrendingMovies();
+    fetchNewMovies();
+    fetchTrendingTV();
+  };
+
+  // Search button
+  document.getElementById('searchButton').addEventListener('click', searchAll);
+  document.getElementById('searchInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') searchAll();
+  });
+
+  async function fetchTrendingMovies() {
+    trendingMoviesContainer.innerHTML = 'Loading...';
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/trending/movie/day?api_key=${API_KEY}`);
+      const data = await res.json();
+      renderMovies(data.results, trendingMoviesContainer);
+    } catch {
+      trendingMoviesContainer.innerHTML = '<p>Error loading trending movies.</p>';
+    }
+  }
+
+  async function fetchNewMovies() {
+    newMoviesContainer.innerHTML = 'Loading...';
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${API_KEY}`);
+      const data = await res.json();
+      renderMovies(data.results, newMoviesContainer);
+    } catch {
+      newMoviesContainer.innerHTML = '<p>Error loading new movies.</p>';
+    }
+  }
+
+  async function fetchTrendingTV() {
+    trendingTVContainer.innerHTML = 'Loading...';
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/trending/tv/day?api_key=${API_KEY}`);
+      const data = await res.json();
+      renderTVShows(data.results, trendingTVContainer);
+    } catch {
+      trendingTVContainer.innerHTML = '<p>Error loading trending TV shows.</p>';
+    }
+  }
+
+  async function searchAll() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) return;
+
+    searchResultsMovies.innerHTML = 'Loading...';
+    searchResultsTV.innerHTML = 'Loading...';
+    searchSectionMovies.style.display = 'block';
+    searchSectionTV.style.display = 'block';
+
+    try {
       const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
       const data = await res.json();
-
       const movies = data.results.filter(item => item.media_type === 'movie');
       const tvShows = data.results.filter(item => item.media_type === 'tv');
-
-      renderMovies(movies);
-      renderTVShows(tvShows);
+      renderMovies(movies, searchResultsMovies);
+      renderTVShows(tvShows, searchResultsTV);
+    } catch {
+      searchResultsMovies.innerHTML = '<p>Error searching movies.</p>';
+      searchResultsTV.innerHTML = '<p>Error searching TV shows.</p>';
     }
+  }
 
-    function renderMovies(movies) {
-      const container = document.getElementById('results-movies');
-      container.innerHTML = '';
+  // Render Movies helper
+  function renderMovies(movies, container) {
+    container.innerHTML = '';
+    if (!movies.length) {
+      container.innerHTML = '<p>No movies found.</p>';
+      return;
+    }
+    movies.forEach(movie => {
+      const title = movie.title;
+      const poster = movie.poster_path ? `https://image.tmdb.org/t/p/w300${movie.poster_path}` : 'https://via.placeholder.com/300x450?text=No+Image';
+      const year = movie.release_date ? movie.release_date.slice(0, 4) : 'N/A';
+      const url = `https://mappletv.uk/watch/movie/${movie.id}`;
 
-      if (!movies.length) {
-        container.innerHTML = '<p>No movies found.</p>';
-        return;
-      }
-
-      movies.forEach(movie => {
-        const title = movie.title;
-        const poster = movie.poster_path ? `https://image.tmdb.org/t/p/w300${movie.poster_path}` : 'https://via.placeholder.com/300x450';
-        const year = movie.release_date ? movie.release_date.slice(0, 4) : 'N/A';
-        const url = `https://mappletv.uk/watch/movie/${movie.id}`;
-
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <img src="${poster}" alt="${title}" />
-          <div class="card-content">
-            <div class="title">${title} (${year})</div>
-            <a href="${url}" class="watch-button" target="_blank">Watch Now</a>
-          </div>
-        `;
-        container.appendChild(div);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img src="${poster}" alt="${title}" />
+        <div class="card-content">
+          <div class="title">${title} (${year})</div>
+          <div class="watch-button" tabindex="0">Watch Now</div>
+        </div>
+      `;
+      card.querySelector('.watch-button').addEventListener('click', () => {
+        openAdThenContent(url);
       });
+      container.appendChild(card);
+    });
+  }
 
-      attachAdRedirect();
+  // Render TV helper
+  async function renderTVShows(shows, container) {
+    container.innerHTML = '';
+    if (!shows.length) {
+      container.innerHTML = '<p>No TV shows found.</p>';
+      return;
     }
+    for (const show of shows) {
+      const title = show.name;
+      const poster = show.poster_path ? `https://image.tmdb.org/t/p/w300${show.poster_path}` : 'https://via.placeholder.com/300x450?text=No+Image';
+      const year = show.first_air_date ? show.first_air_date.slice(0, 4) : 'N/A';
 
-    async function renderTVShows(shows) {
-      const container = document.getElementById('results-tv');
-      container.innerHTML = '';
-
-      if (!shows.length) {
-        container.innerHTML = '<p>No TV shows found.</p>';
-        return;
-      }
-
-      for (const show of shows) {
-        const title = show.name;
-        const poster = show.poster_path ? `https://image.tmdb.org/t/p/w300${show.poster_path}` : 'https://via.placeholder.com/300x450';
-        const year = show.first_air_date ? show.first_air_date.slice(0, 4) : 'N/A';
-
-        // Get latest season and episode
+      // Get latest season and episode for this show
+      try {
         const detailsRes = await fetch(`https://api.themoviedb.org/3/tv/${show.id}?api_key=${API_KEY}`);
         const details = await detailsRes.json();
         const seasonNumber = details.number_of_seasons || 1;
@@ -239,50 +260,50 @@
 
         const url = `https://mappletv.uk/watch/tv/${show.id}-${seasonNumber}-${episodeNumber}`;
 
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
           <img src="${poster}" alt="${title}" />
           <div class="card-content">
             <div class="title">${title} (${year}) - S${seasonNumber}E${episodeNumber}</div>
-            <a href="${url}" class="watch-button" target="_blank">Watch Latest</a>
+            <div class="watch-button" tabindex="0">Watch Latest</div>
           </div>
         `;
-        container.appendChild(div);
-      }
-
-      attachAdRedirect();
-    }
-
-    function attachAdRedirect() {
-      document.querySelectorAll('.watch-button').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.preventDefault();
-          const targetUrl = btn.href;
-          showAdThenRedirect(targetUrl);
+        card.querySelector('.watch-button').addEventListener('click', () => {
+          openAdThenContent(url);
         });
-      });
+        container.appendChild(card);
+      } catch {
+        // If error getting latest episode, fallback to season 1 episode 1 link
+        const fallbackUrl = `https://mappletv.uk/watch/tv/${show.id}-1-1`;
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img src="${poster}" alt="${title}" />
+          <div class="card-content">
+            <div class="title">${title} (${year}) - S1E1</div>
+            <div class="watch-button" tabindex="0">Watch Latest</div>
+          </div>
+        `;
+        card.querySelector('.watch-button').addEventListener('click', () => {
+          openAdThenContent(fallbackUrl);
+        });
+        container.appendChild(card);
+      }
     }
+  }
 
-    function showAdThenRedirect(url) {
-  const modal = document.getElementById('ad-modal');
-  const countdown = document.getElementById('countdown');
-  let seconds = 5;
+  // Open Adsterra ad in new tab, then after 5s open movie/TV link in another new tab
+  function openAdThenContent(contentUrl) {
+    // Open Adsterra ad link immediately in new tab
+    window.open(adsterraDirectLink, '_blank');
 
-  modal.style.display = 'flex';
-  countdown.textContent = seconds;
+    // After 5 seconds open actual content in a new tab
+    setTimeout(() => {
+      window.open(contentUrl, '_blank');
+    }, 5000);
+  }
+</script>
 
-  const timer = setInterval(() => {
-    seconds--;
-    countdown.textContent = seconds;
-    if (seconds === 0) {
-      clearInterval(timer);
-      modal.style.display = 'none';
-      window.location.href = url; // ✅ ← Redirects in same tab
-    }
-  }, 1000);
-}
-
-  </script>
 </body>
 </html>
